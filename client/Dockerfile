@@ -2,7 +2,9 @@
 # Build: docker build -f client/Dockerfile -t typeracer-client .
 
 # --- build stage ---------------------------------------------------------------
-FROM node:22-alpine AS build
+# Debian-based (glibc) build image: avoids an esbuild ETXTBSY race seen on
+# alpine/musl during Docker builds. Discarded in the final stage, so no size cost.
+FROM node:22-slim AS build
 WORKDIR /app
 
 # Install deps first for layer caching.
