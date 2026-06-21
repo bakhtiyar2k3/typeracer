@@ -1,0 +1,8 @@
+# Normalize text to LF in the repo (these files build/run in Linux containers).
+* text=auto eol=lf
+
+# Binary assets — never normalize.
+*.mp3 binary
+*.png binary
+*.jpg binary
+*.ico binary

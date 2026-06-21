@@ -1,0 +1,8 @@
+{
+  "name": "@typeracer/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "constants/index.js",
+  "description": "Shared constants and event/type definitions for client and server."
+}

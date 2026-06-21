@@ -1,0 +1,49 @@
+# Full stack: MongoDB + API/socket server + nginx-served SPA.
+#   1. cp .env.docker.example .env   (then set a strong JWT_SECRET)
+#   2. docker compose up --build
+#   3. open http://localhost:8080
+#
+# Everything is served behind the client (nginx) on one origin; nginx proxies
+# /api and /socket.io to the server, so no host URLs are baked into the build.
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: '4000'
+      MONGODB_URI: mongodb://mongo:27017/typeracer
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required — set it in .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:8080}
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '${APP_PORT:-8080}:80'
+    depends_on:
+      - server
+
+volumes:
+  mongo-data:
