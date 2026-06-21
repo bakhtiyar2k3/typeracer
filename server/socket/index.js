@@ -35,7 +35,8 @@ async function resolveRating(user) {
 
 export function initSocket(httpServer) {
   const io = new Server(httpServer, {
-    cors: { origin: env.clientOrigin, credentials: true },
+    // Token-based handshake auth (no cookies), so no credentials needed.
+    cors: { origin: env.clientOrigin },
     // Throttle/clean transport; updates use volatile emits for caret frames.
     pingInterval: 20000,
     pingTimeout: 25000,

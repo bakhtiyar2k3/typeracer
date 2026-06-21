@@ -202,12 +202,42 @@ Expected tail: `✅ SMOKE TEST PASSED`.
 
 ---
 
-## Production build
+## Deploy for free (Render + MongoDB Atlas)
+
+Live multiplayer needs an always-on Node process with WebSockets (not
+serverless functions). The simplest free setup is **one web service** that
+serves the SPA + API + sockets from a single origin (see the root [`Dockerfile`](Dockerfile)),
+plus a free MongoDB. A [`render.yaml`](render.yaml) blueprint makes it close to one click.
+
+### 1) MongoDB Atlas (free M0)
+1. Create a free account → create an **M0 (free)** cluster.
+2. **Database Access** → add a user (username + password).
+3. **Network Access** → allow `0.0.0.0/0` (free hosts use dynamic IPs).
+4. **Connect → Drivers** → copy the string and add the db name:
+   `mongodb+srv://USER:PASS@cluster0.xxxx.mongodb.net/typeracer?retryWrites=true&w=majority`
+
+### 2) Render (free web service)
+1. Push this repo to GitHub.
+2. Render → **New → Blueprint** → select the repo (it reads `render.yaml`).
+3. Set **`MONGODB_URI`** to your Atlas string when prompted (`JWT_SECRET` is
+   auto-generated; `NODE_ENV=production` is preset).
+4. Deploy → you get `https://<app>.onrender.com`.
+5. *(Optional)* set `CLIENT_ORIGIN` to that URL to lock CORS, then redeploy.
+
+> Free instances **sleep after ~15 min idle** (first hit cold-starts in
+> ~30–60s). To keep it warm for interviews, ping `https://<app>.onrender.com/api/health`
+> every ~10 min with a free uptime monitor (UptimeRobot, cron-job.org). WebSockets
+> work on the free tier.
+
+The same single image also deploys to **Fly.io**, **Koyeb**, or **Railway** —
+provide `MONGODB_URI`, `JWT_SECRET`, `NODE_ENV=production`; the host injects `PORT`.
+
+### Build it yourself (any host)
 
 ```bash
-cd client && npm run build       # outputs client/dist
-cd server && npm start           # serve API + sockets; host dist behind any static server / CDN
+docker build -t typeracer .
+docker run -p 4000:4000 \
+  -e NODE_ENV=production -e JWT_SECRET=<strong-secret> \
+  -e MONGODB_URI=<your-mongo-uri> typeracer
+# open http://localhost:4000
 ```
-
-Set real values for `JWT_SECRET`, `MONGODB_URI`, `CLIENT_ORIGIN` and
-`NODE_ENV=production` in `server/.env`.
